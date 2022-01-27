@@ -2,7 +2,12 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_higher_lower/ui/ImageWidget.dart';
+import 'package:flutter_higher_lower/ui/QuestionWidget.dart';
+
+import 'CenterWidget.dart';
+import 'CustomStyles.dart';
+import 'ResultWidget.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -16,7 +21,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   late bool change;
   late bool disappear;
   late double height;
-  late double width;
   late AnimationController animationController;
   late double scaleValue;
   late Animation valueAnimation;
@@ -86,7 +90,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    width = MediaQuery.of(context).size.width;
     var padding = MediaQuery.of(context).padding;
     height = MediaQuery.of(context).size.height - padding.top - padding.bottom;
 
@@ -96,50 +99,47 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       body: Stack(
         alignment: AlignmentDirectional.center,
         children: [
-          _mainList(),
-          AnimatedScale(
-            scale: scaleValue,
-            duration: const Duration(milliseconds: 450),
-            curve: Curves.decelerate,
-            child: AnimatedContainer(
-              duration: const Duration(seconds: 2),
-              curve: Curves.fastOutSlowIn,
-              child: change ? _checkIcon() : _middleIcon(),
-            ),
+          ListView.builder(
+            controller: _scrollController,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                height: height / 2,
+                child: Stack(
+                  alignment: AlignmentDirectional.center,
+                  children: [
+                    (index == inputIndex)
+                        ? CustomImage(image: optionImage, height: height)
+                        : CustomImage(image: questionImage, height: height),
+                    _mainLayout(index)
+                  ],
+                ),
+              );
+            },
+            itemCount: 100,
           ),
+          CenterIcon(scaleValue: scaleValue, change: change),
         ],
       ),
     ));
   }
 
-  Widget _mainList() {
-    return ListView.builder(
-      controller: _scrollController,
-      physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) {
-        return SizedBox(
-          height: height / 2,
-          child: Stack(
-            alignment: AlignmentDirectional.center,
-            children: [_image(index), _inputLayout(index)],
-          ),
-        );
-      },
-      itemCount: 100,
-    );
-  }
-
-  Widget _inputLayout(int index) {
+  Widget _mainLayout(int index) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        (index == inputIndex) ? _input(index) : _question(),
+        (index == inputIndex)
+            ? _optionLayout(index)
+            : Question(
+                question: question,
+                searches: searches,
+              ),
       ],
     );
   }
 
-  Widget _input(int index) {
+  Widget _optionLayout(int index) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -148,40 +148,26 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
             '"$option"',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 45.0),
+            style: primaryTitle,
           ),
         ),
         const Padding(
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
             'has',
-            style: TextStyle(fontSize: 20.0, color: Colors.white),
+            style: description,
           ),
         ),
-        change ? _result() : _buttons(index),
+        change ? Result(result: result) : _buttonLayout(index),
         Text(
           'searches than $question',
-          style: const TextStyle(color: Colors.white, fontSize: 20.0),
+          style: description,
         )
       ],
     );
   }
 
-  Widget _result() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(result.toString(),
-          style: const TextStyle(
-              color: Colors.yellow,
-              fontWeight: FontWeight.bold,
-              fontSize: 45.0)),
-    );
-  }
-
-  Widget _buttons(int index) {
+  Widget _buttonLayout(int index) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
@@ -202,88 +188,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         },
         child: Text(title),
         style: ElevatedButton.styleFrom(
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(30.0))),
+            shape: buttonShape,
             minimumSize: const Size(0.0, 40.0),
             primary: (title == 'Higher') ? Colors.green : Colors.red),
-      ),
-    );
-  }
-
-  Widget _question() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            '"$question"',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 45.0),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            'has',
-            style: TextStyle(fontSize: 20.0, color: Colors.white),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            searches,
-            style: const TextStyle(
-                color: Colors.yellow,
-                fontWeight: FontWeight.bold,
-                fontSize: 45.0),
-          ),
-        ),
-        const Text(
-          'average monthly searches',
-          style: TextStyle(color: Colors.white, fontSize: 20.0),
-        )
-      ],
-    );
-  }
-
-  Widget _image(int index) {
-    return SizedBox(
-      // width: width,
-      height: height / 2,
-      child: ColorFiltered(
-        colorFilter:
-            ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
-        child: Image(
-          fit: BoxFit.cover,
-          image: CachedNetworkImageProvider(
-            (index == inputIndex) ? optionImage : questionImage,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _middleIcon() {
-    return const CircleAvatar(
-      maxRadius: 35.0,
-      backgroundColor: Colors.white,
-      child: Text(
-        'VS',
-        style: TextStyle(
-            color: Colors.black, fontSize: 17.0, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _checkIcon() {
-    return const CircleAvatar(
-      maxRadius: 35.0,
-      backgroundColor: Colors.green,
-      child: Icon(
-        Icons.check,
-        color: Colors.white,
       ),
     );
   }
