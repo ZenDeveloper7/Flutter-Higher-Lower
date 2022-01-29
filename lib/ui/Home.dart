@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_higher_lower/widgets/QuestionWidget.dart';
 import 'package:flutter_higher_lower/widgets/image_widget.dart';
+import 'package:flutter_higher_lower/widgets/input_widget.dart';
+import 'package:flutter_higher_lower/widgets/option_widget.dart';
 
 import '../constants/styles.dart';
-import '../model.dart';
+import '../model/model.dart';
 import '../widgets/center_widget.dart';
 import '../widgets/result_widget.dart';
 
@@ -96,8 +98,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   children: [
                     (index == inputIndex)
                         ? CustomImage(image: answer.image, height: height)
-                        : CustomImage(
-                            image: question.image, height: height),
+                        : CustomImage(image: question.image, height: height),
                     _mainLayout(index)
                   ],
                 ),
@@ -117,7 +118,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         (index == inputIndex)
-            ? _optionLayout(index)
+            ? OptionWidget(
+                goNext: goNext,
+                answer: answer,
+                question: question,
+                inputLayout: _buttonLayout(index),
+              )
             : Question(
                 question: question.question,
                 searches: question.searches,
@@ -126,65 +132,30 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
-  Widget _optionLayout(int index) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            '"${answer.question}"',
-            style: primaryTitle,
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            'has',
-            style: description,
-          ),
-        ),
-        goNext
-            ? Result(result: answer.searches)
-            : _buttonLayout(index),
-        Text(
-          'searches than ${question.question}',
-          style: description,
-        )
-      ],
-    );
-  }
-
-  Widget _buttonLayout(int index) {
+  Widget _buttonLayout(index) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         children: [
-          _inputButton(index, 'Higher'),
-          _inputButton(index, 'Lower'),
+          InputWidget(
+            validateInput: () {
+              _validateInput(index);
+            },
+            title: 'Higher',
+          ),
+          InputWidget(
+            validateInput: () {
+              _validateInput(index);
+            },
+            title: 'Lower',
+          ),
         ],
       ),
     );
   }
 
-  Widget _inputButton(int index, String title) {
-    return SizedBox(
-      width: 250.0,
-      child: ElevatedButton(
-        onPressed: () {
-          _validateInput(index);
-        },
-        child: Text(title),
-        style: ElevatedButton.styleFrom(
-            shape: buttonShape,
-            minimumSize: const Size(0.0, 40.0),
-            primary: (title == 'Higher') ? Colors.green : Colors.red),
-      ),
-    );
-  }
-
-  _validateInput(int index) {
+ 
+  _validateInput(index) {
     //UI change for correct/incorrect answer
     setState(() {
       //Logic part
