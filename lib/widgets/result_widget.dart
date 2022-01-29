@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'CustomStyles.dart';
+import '../constants/styles.dart';
 
 class Result extends StatelessWidget {
   final int result;

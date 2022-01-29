@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'CorrectWidget.dart';
-import 'VsWidget.dart';
+import 'correct_widget.dart';
+import 'vs_widget.dart';
 
 
 class CenterIcon extends StatelessWidget {

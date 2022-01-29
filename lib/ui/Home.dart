@@ -1,13 +1,13 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_higher_lower/ui/ImageWidget.dart';
-import 'package:flutter_higher_lower/ui/QuestionWidget.dart';
+import 'package:flutter_higher_lower/widgets/QuestionWidget.dart';
+import 'package:flutter_higher_lower/widgets/image_widget.dart';
 
-import 'CenterWidget.dart';
-import 'CustomStyles.dart';
-import 'ResultWidget.dart';
+import '../constants/styles.dart';
+import '../model.dart';
+import '../widgets/center_widget.dart';
+import '../widgets/result_widget.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -18,22 +18,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
   late ScrollController _scrollController;
-  late bool change;
-  late bool disappear;
   late double height;
-  late AnimationController animationController;
+  late bool goNext;
   late double scaleValue;
-  late Animation valueAnimation;
-  late int timeBetweenTransitions;
-
-  late String question;
-  late String questionImage;
-  late String optionImage;
-  late String option;
-  late String searches;
-  late int result;
+  late List<HLModel> inputList;
+  late HLModel question;
+  late HLModel answer;
   late int inputIndex;
-  late int randomIndex;
   List<String> options = [
     'Amazon',
     'Flipkart',
@@ -68,24 +59,19 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    change = false;
+    goNext = false;
     scaleValue = 1.0;
-    timeBetweenTransitions = 1;
     inputIndex = 1;
-    question = 'FedEx';
-    searches = "7,48,000";
-    questionImage =
-        'https://newsroom.fedex.com/wp-content/uploads/2021/07/FedEx_Pic-1.jpg';
-    result = Random().nextInt(500000);
-    randomIndex = Random().nextInt(options.length);
-    option = options[randomIndex];
-    optionImage = optionImages[randomIndex];
 
-    animationController = AnimationController(
-        vsync: this, duration: Duration(seconds: timeBetweenTransitions));
-    valueAnimation = IntTween(begin: 0, end: 50).animate(
-        CurvedAnimation(parent: animationController, curve: Curves.easeOut));
-    animationController.forward();
+    inputList = List<HLModel>.generate(
+        optionImages.length,
+        (index) => HLModel(
+            question: options[index],
+            image: optionImages[index],
+            searches: Random().nextInt(50000)));
+
+    question = inputList[0];
+    answer = inputList[inputIndex];
   }
 
   @override
@@ -109,8 +95,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   alignment: AlignmentDirectional.center,
                   children: [
                     (index == inputIndex)
-                        ? CustomImage(image: optionImage, height: height)
-                        : CustomImage(image: questionImage, height: height),
+                        ? CustomImage(image: answer.image, height: height)
+                        : CustomImage(
+                            image: question.image, height: height),
                     _mainLayout(index)
                   ],
                 ),
@@ -118,7 +105,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             },
             itemCount: 100,
           ),
-          CenterIcon(scaleValue: scaleValue, change: change),
+          CenterIcon(scaleValue: scaleValue, change: goNext),
         ],
       ),
     ));
@@ -132,8 +119,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         (index == inputIndex)
             ? _optionLayout(index)
             : Question(
-                question: question,
-                searches: searches,
+                question: question.question,
+                searches: question.searches,
               ),
       ],
     );
@@ -147,7 +134,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
-            '"$option"',
+            '"${answer.question}"',
             style: primaryTitle,
           ),
         ),
@@ -158,9 +145,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             style: description,
           ),
         ),
-        change ? Result(result: result) : _buttonLayout(index),
+        goNext
+            ? Result(result: answer.searches)
+            : _buttonLayout(index),
         Text(
-          'searches than $question',
+          'searches than ${question.question}',
           style: description,
         )
       ],
@@ -199,34 +188,26 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     //UI change for correct/incorrect answer
     setState(() {
       //Logic part
-      disappear = true;
-      change = true;
+      goNext = true;
     });
     //Scaling to 0
-    Future.delayed(Duration(seconds: timeBetweenTransitions), () {
+    Future.delayed(const Duration(seconds: timeBetweenTransitions), () {
       setState(() {
         scaleValue = 0.0;
       });
     });
     //Next Image
-    Future.delayed(Duration(seconds: timeBetweenTransitions + 1), () {
+    Future.delayed(const Duration(seconds: timeBetweenTransitions + 1), () {
       _scrollController.animateTo(
         index * (height / 2),
         duration: const Duration(milliseconds: 1000),
         curve: Curves.fastOutSlowIn,
       );
       setState(() {
-        disappear = false;
-        change = false;
+        goNext = false;
         inputIndex = inputIndex + 1;
-        question = option;
-        searches = result.toString();
-        questionImage = optionImage;
-
-        result = Random().nextInt(500000);
-        randomIndex = Random().nextInt(options.length);
-        option = options[randomIndex];
-        optionImage = optionImages[randomIndex];
+        question = answer;
+        answer = inputList[inputIndex];
       });
       //Scaling back to 1
       Future.delayed(const Duration(seconds: 1), () {

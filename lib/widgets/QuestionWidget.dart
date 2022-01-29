@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'CustomStyles.dart';
+import '../constants/styles.dart';
 
 class Question extends StatelessWidget {
   final String question;
-  final String searches;
+  final int searches;
 
   const Question({Key? key, required this.question, required this.searches})
       : super(key: key);
@@ -29,7 +29,7 @@ class Question extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
-            searches,
+            "$searches",
             style: secondaryTitle,
           ),
         ),
