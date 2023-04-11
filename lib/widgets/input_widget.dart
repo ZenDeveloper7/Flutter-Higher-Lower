@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_higher_lower/constants/styles.dart';
 
-
 class InputWidget extends StatelessWidget {
-  final VoidCallback validateInput;
+  final VoidCallback onClick;
   final String title;
 
-  const InputWidget({ Key? key, required this.validateInput, required this.title }) : super(key: key);
+  const InputWidget({Key? key, required this.onClick, required this.title})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 250.0,
       child: ElevatedButton(
-        onPressed: validateInput,
+        onPressed: onClick,
         child: Text(title),
         style: ElevatedButton.styleFrom(
             shape: buttonShape,

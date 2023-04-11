@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_higher_lower/widgets/incorrect_widget.dart';
 
 import 'correct_widget.dart';
 import 'vs_widget.dart';
 
-
 class CenterIcon extends StatelessWidget {
   final double scaleValue;
-  final bool change;
+  final int iconValue;
 
-  const CenterIcon({Key? key, required this.scaleValue, required this.change})
+  const CenterIcon(
+      {Key? key, required this.scaleValue, required this.iconValue})
       : super(key: key);
 
   @override
@@ -20,7 +21,11 @@ class CenterIcon extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(seconds: 2),
         curve: Curves.fastOutSlowIn,
-        child: change ? const CorrectIcon() : const VsIcon(),
+        child: (iconValue == -1)
+            ? const VsIcon()
+            : (iconValue == 1)
+                ? const CorrectIcon()
+                : const IncorrectIcon(),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_higher_lower/ui/GameOver.dart';
 import 'package:flutter_higher_lower/widgets/QuestionWidget.dart';
 import 'package:flutter_higher_lower/widgets/image_widget.dart';
 import 'package:flutter_higher_lower/widgets/input_widget.dart';
@@ -21,12 +22,13 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with TickerProviderStateMixin {
   late ScrollController _scrollController;
   late double height;
-  late bool goNext;
+  late int iconValue;
   late double scaleValue;
   late List<HLModel> inputList;
   late HLModel question;
   late HLModel answer;
   late int inputIndex;
+  late int score;
   List<String> options = [
     'Amazon',
     'Flipkart',
@@ -61,10 +63,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    goNext = false;
+    iconValue = -1;
     scaleValue = 1.0;
     inputIndex = 1;
-
+    score = 0;
     inputList = List<HLModel>.generate(
         optionImages.length,
         (index) => HLModel(
@@ -106,7 +108,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             },
             itemCount: 100,
           ),
-          CenterIcon(scaleValue: scaleValue, change: goNext),
+          CenterIcon(scaleValue: scaleValue, iconValue: iconValue),
         ],
       ),
     ));
@@ -119,7 +121,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       children: [
         (index == inputIndex)
             ? OptionWidget(
-                goNext: goNext,
+                goNext: (iconValue == 1),
                 answer: answer,
                 question: question,
                 inputLayout: _buttonLayout(index),
@@ -138,14 +140,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       child: Column(
         children: [
           InputWidget(
-            validateInput: () {
-              _validateInput(index);
+            onClick: () {
+              _validateInput(index, true);
             },
             title: 'Higher',
           ),
           InputWidget(
-            validateInput: () {
-              _validateInput(index);
+            onClick: () {
+              _validateInput(index, false);
             },
             title: 'Lower',
           ),
@@ -154,38 +156,90 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
- 
-  _validateInput(index) {
+  _validateInput(index, isHigher) {
     //UI change for correct/incorrect answer
     setState(() {
       //Logic part
-      goNext = true;
+      if (isHigher) {
+        if (answer.searches > question.searches) {
+          score += 1;
+          iconValue = 1;
+          //Scaling to 0
+          Future.delayed(const Duration(seconds: timeBetweenTransitions), () {
+            setState(() {
+              scaleValue = 0.0;
+            });
+          });
+          //Next Image
+          Future.delayed(const Duration(seconds: timeBetweenTransitions + 1),
+              () {
+            _scrollController.animateTo(
+              index * (height / 2),
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.fastOutSlowIn,
+            );
+            setState(() {
+              iconValue = -1;
+              inputIndex = inputIndex + 1;
+              question = answer;
+              answer = inputList[inputIndex];
+            });
+            //Scaling back to 1
+            Future.delayed(const Duration(seconds: 1), () {
+              setState(() {
+                scaleValue = 1.0;
+              });
+            });
+          });
+        } else {
+          wrongAnswer();
+        }
+      } else {
+        if (answer.searches < question.searches) {
+          score += 1;
+          iconValue = 1;
+          //Scaling to 0
+          Future.delayed(const Duration(seconds: timeBetweenTransitions), () {
+            setState(() {
+              scaleValue = 0.0;
+            });
+          });
+          //Next Image
+          Future.delayed(const Duration(seconds: timeBetweenTransitions + 1),
+              () {
+            _scrollController.animateTo(
+              index * (height / 2),
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.fastOutSlowIn,
+            );
+            setState(() {
+              iconValue = -1;
+              inputIndex = inputIndex + 1;
+              question = answer;
+              answer = inputList[inputIndex];
+            });
+            //Scaling back to 1
+            Future.delayed(const Duration(seconds: 1), () {
+              setState(() {
+                scaleValue = 1.0;
+              });
+            });
+          });
+        } else {
+          wrongAnswer();
+        }
+      }
     });
-    //Scaling to 0
-    Future.delayed(const Duration(seconds: timeBetweenTransitions), () {
-      setState(() {
-        scaleValue = 0.0;
-      });
-    });
-    //Next Image
-    Future.delayed(const Duration(seconds: timeBetweenTransitions + 1), () {
-      _scrollController.animateTo(
-        index * (height / 2),
-        duration: const Duration(milliseconds: 1000),
-        curve: Curves.fastOutSlowIn,
-      );
-      setState(() {
-        goNext = false;
-        inputIndex = inputIndex + 1;
-        question = answer;
-        answer = inputList[inputIndex];
-      });
-      //Scaling back to 1
-      Future.delayed(const Duration(seconds: 1), () {
-        setState(() {
-          scaleValue = 1.0;
-        });
-      });
-    });
+  }
+
+  void wrongAnswer() {
+    iconValue = 0;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (context) => GameOver(
+                score: score,
+              )),
+    );
   }
 }
